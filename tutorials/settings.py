@@ -43,12 +43,30 @@ def load_pulsars(datadir, PINT=False, ephemeris='DE438', save=False):
     # else: load them in slowly:
     else:
         psrs = []
+        #i = 0
         for p, t in zip(parfiles, timfiles):
+            timing_param_dict = {}
+            #if i > 0:
+            #    continue
             if PINT:
-                psr = Pulsar(p, t, ephem=ephemeris, timing_package='PINT')
+                print("WARNING: We will not get timing parameter values out of this")
+                psr = Pulsar(p, t, ephem=ephemeris, 
+                             timing_package='PINT', 
+                             drop_t2pulsar = True, 
+                             drop_pintpsr = True)
             else:
-                psr = Pulsar(p, t, ephem=ephemeris)
+                psr = Pulsar(p, t, ephem=ephemeris,
+                             drop_t2pulsar = False, 
+                             drop_pintpsr = True)
+                
+                for param in psr.t2pulsar.pars():
+                    timing_param_dict[param] = psr.t2pulsar[param].val
+                    timing_param_dict[param + "_err"] = psr.t2pulsar[param].err
+                    
+                psr.timing_param_dict = timing_param_dict
+                del psr.t2pulsar
             psrs.append(psr)
+            #i += 1
         if save:
             # Make your own pickle of these loaded objects to reduce load times significantly
             # at the cost of some space on your computer (~1.8 GB).
